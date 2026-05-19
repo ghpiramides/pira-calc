@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Piramide Calculator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 { font-size: 1.8rem; color: #f0c040; margin-bottom: 6px; letter-spacing: 1px; }
+    .subtitle { font-size: 0.9rem; color: #888; margin-bottom: 36px; }
+
+    .card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+      margin-bottom: 24px;
+    }
+    .card h2 { font-size: 1rem; color: #f0c040; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+
+    .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+    label { font-size: 0.85rem; color: #aaa; }
+    .input-row { display: flex; gap: 10px; align-items: center; }
+    input[type="number"] {
+      flex: 1; background: #0f3460; border: 1px solid #1a5276; border-radius: 8px;
+      color: #fff; font-size: 1.2rem; padding: 10px 14px; outline: none; transition: border-color 0.2s;
+    }
+    input[type="number"]:focus { border-color: #f0c040; }
+    .unit { color: #888; font-size: 0.9rem; width: 30px; }
+
+    .results { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .result-box { background: #0f3460; border-radius: 10px; padding: 16px; text-align: center; }
+    .result-box .label { font-size: 0.78rem; color: #aaa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .result-box .value { font-size: 1.6rem; font-weight: bold; color: #f0c040; }
+    .result-box .sub { font-size: 0.75rem; color: #666; margin-top: 4px; }
+
+    .triangle-info {
+      margin-top: 20px; background: #0a2444; border-radius: 10px;
+      padding: 16px; font-size: 0.85rem; color: #aaa; line-height: 1.8;
+    }
+    .triangle-info span { color: #f0c040; font-weight: bold; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab {
+      flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #0f3460;
+      background: transparent; color: #aaa; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .tab.active { background: #0f3460; color: #f0c040; border-color: #f0c040; }
+
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] { flex: 1; accent-color: #f0c040; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { color: #f0c040; text-align: left; padding: 6px 8px; border-bottom: 1px solid #0f3460; font-weight: 600; }
+    td { padding: 7px 8px; border-bottom: 1px solid #0a2444; color: #ddd; }
+    tr:hover td { background: #0f3460; }
+
+    .note { font-size: 0.8rem; color: #666; text-align: center; margin-top: 16px; }
+
+    /* Zaagplan */
+    .angle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .angle-box {
+      background: #0f3460; border-radius: 10px; padding: 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .angle-box .alabel { font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .angle-box .aval { font-size: 1.5rem; font-weight: bold; color: #2ecc71; }
+    .angle-box .adesc { font-size: 0.75rem; color: #666; line-height: 1.4; }
+
+    .saw-step {
+      background: #0a2444; border-left: 3px solid #f0c040;
+      border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 10px;
+      font-size: 0.85rem; line-height: 1.7; color: #ccc;
+    }
+    .saw-step strong { color: #f0c040; }
+    .saw-step .step-num {
+      display: inline-block; background: #f0c040; color: #1a1a2e;
+      border-radius: 50%; width: 20px; height: 20px; text-align: center;
+      line-height: 20px; font-size: 0.75rem; font-weight: bold; margin-right: 8px;
+    }
+
+    .nesting-label { font-size: 0.8rem; fill: #aaa; font-family: sans-serif; }
+    .dim-label { font-size: 0.8rem; fill: #f0c040; font-family: sans-serif; font-weight: bold; }
+    .preview { text-align: center; }
+    .preview svg { max-width: 100%; }
+
+    .highlight { color: #2ecc71; font-weight: bold; }
+    .warn { background: #1a2e1a; border: 1px solid #2ecc71; border-radius: 8px; padding: 12px; font-size: 0.82rem; color: #aaa; margin-top: 12px; }
+
+    /* nav */
+    .page-nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; justify-content: center; }
+    .nav-btn {
+      padding: 8px 18px; border-radius: 20px; border: 1px solid #0f3460;
+      background: transparent; color: #aaa; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+    .nav-btn.active { background: #0f3460; color: #f0c040; border-color: #f0c040; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+
+<h1>&#9651; Piramide Calculator</h1>
+<p class="subtitle">Grote Pyramide verhoudingen &nbsp;·&nbsp; basis ×1,57075 &nbsp;·&nbsp; zijde ×1,4945</p>
+
+<div class="page-nav">
+  <button class="nav-btn active" onclick="showPage('maten')">Maten</button>
+  <button class="nav-btn" onclick="showPage('zaagplan')">Zaagplan & Hoeken</button>
+  <button class="nav-btn" onclick="showPage('nesting')">Nestingplan (min. verlies)</button>
+  <button class="nav-btn" onclick="showPage('tabel')">Referentietabel</button>
+</div>
+
+<!-- ═══════════════ PAGINA: MATEN ═══════════════ -->
+<div id="page-maten" class="page active">
+  <div class="card">
+    <h2>Berekening</h2>
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('hoogte')">Vanuit hoogte</button>
+      <button class="tab" onclick="setTab('basis')">Vanuit basis</button>
+    </div>
+
+    <div id="tab-hoogte">
+      <div class="input-group">
+        <label>Hoogte van de piramide</label>
+        <div class="range-wrap">
+          <input type="range" id="slider" min="1" max="200" value="40" oninput="syncSlider(this.value)">
+        </div>
+        <div class="input-row">
+          <input type="number" id="hoogte" value="40" min="0.1" step="0.1" oninput="berekenVanHoogte(this.value)">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-basis" style="display:none">
+      <div class="input-group">
+        <label>Basis (grondvlak zijde)</label>
+        <div class="input-row">
+          <input type="number" id="basis-in" value="62.83" min="0.1" step="0.1" oninput="berekenVanBasis(this.value)">
+          <span class="unit">cm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="result-box">
+        <div class="label">Hoogte</div>
+        <div class="value" id="res-hoogte">40,00</div>
+        <div class="sub">cm</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Basis (grondvlak)</div>
+        <div class="value" id="res-basis">62,83</div>
+        <div class="sub">cm &nbsp;·&nbsp; ×1,57075</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Zijde (riblengte)</div>
+        <div class="value" id="res-zijde">59,78</div>
+        <div class="sub">cm &nbsp;·&nbsp; ×1,4945</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Schijnhoogte vlak</div>
+        <div class="value" id="res-sh">50,86</div>
+        <div class="sub">cm (hoogte driehoek)</div>
+      </div>
+    </div>
+
+    <div class="triangle-info">
+      4 gelijkbenige driehoeken &nbsp;|&nbsp;
+      basis <span id="tri-basis">62,83</span> cm &nbsp;·&nbsp;
+      zijden 2× <span id="tri-zijde">59,78</span> cm<br>
+      Halve basis (zaagsnede): <span id="tri-half">31,41</span> cm &nbsp;·&nbsp;
+      Hoogte driehoek: <span id="tri-sh">50,86</span> cm
+    </div>
+  </div>
+
+  <div class="card preview">
+    <h2>Vooraanzicht</h2>
+    <svg id="pyramid-svg" viewBox="0 0 300 230" width="300" height="230">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#888"/>
+        </marker>
+      </defs>
+      <polygon id="pyr-poly" points="150,20 40,185 260,185" fill="#1a3a5c" stroke="#f0c040" stroke-width="2"/>
+      <line x1="150" y1="20" x2="150" y2="185" stroke="#e74c3c" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="158" y="108" fill="#e74c3c" font-size="11" font-family="sans-serif" id="lbl-h">h</text>
+      <text x="145" y="210" fill="#3498db" font-size="11" font-family="sans-serif" text-anchor="middle" id="lbl-b">basis</text>
+      <text x="72" y="97" fill="#2ecc71" font-size="11" font-family="sans-serif" id="lbl-s">zijde</text>
+      <text x="268" y="28" fill="#f0c040" font-size="11" font-family="sans-serif">N</text>
+      <line x1="273" y1="30" x2="273" y2="50" stroke="#f0c040" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+    <p class="note">Één basisrib op de Noord-Zuid-lijn richten</p>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGINA: ZAAGPLAN ═══════════════ -->
+<div id="page-zaagplan" class="page">
+  <div class="card">
+    <h2>Zaaghoeken voor perfecte passing</h2>
+
+    <div class="angle-grid">
+      <div class="angle-box">
+        <div class="alabel">Vlakshoek (helling)</div>
+        <div class="aval" id="ang-face">51,84°</div>
+        <div class="adesc">Hoek van het vlak t.o.v. horizontaal.<br>Identiek aan de Grote Piramide.</div>
+      </div>
+      <div class="angle-box">
+        <div class="alabel">Bevel — basisrand</div>
+        <div class="aval" id="ang-base-bevel">38,16°</div>
+        <div class="adesc">Zaagblad schuin zetten om onderrand plat op grond te laten aansluiten.</div>
+      </div>
+      <div class="angle-box">
+        <div class="alabel">Bevel — zijrand (elk vlak)</div>
+        <div class="aval" id="ang-side-bevel">33,83°</div>
+        <div class="adesc">Twee vlakken samen = 67,7°. Tweemaal dit op de cirkelzaag: perfecte voeg.</div>
+      </div>
+      <div class="angle-box">
+        <div class="alabel">Tophoek driehoek</div>
+        <div class="aval" id="ang-apex">63,43°</div>
+        <div class="adesc">Hoek aan de top van elke gelijkbenige driehoek (voor sjabloon).</div>
+      </div>
+      <div class="angle-box">
+        <div class="alabel">Basishoek driehoek</div>
+        <div class="aval" id="ang-base-tri">58,29°</div>
+        <div class="adesc">Hoek onderaan elke driehoek (links en rechts gelijk).</div>
+      </div>
+      <div class="angle-box">
+        <div class="alabel">Diedrisch hoek (ribben)</div>
+        <div class="aval" id="ang-dihedral">112,39°</div>
+        <div class="adesc">3D-hoek tussen twee aangrenzende vlakken langs de ribben.</div>
+      </div>
+    </div>
+
+    <div class="saw-step">
+      <span class="step-num">1</span>
+      <strong>Teken elk driehoekig paneel</strong><br>
+      Basis = <strong id="sz-basis">62,83 cm</strong> &nbsp;·&nbsp; twee zijden elk <strong id="sz-zijde">59,78 cm</strong><br>
+      Gebruik een passer of lat: teken basis, dan vanuit beide hoeken bogen met de zijdelengte → snijpunt is de top.
+    </div>
+
+    <div class="saw-step">
+      <span class="step-num">2</span>
+      <strong>Zaag de vier panelen op vorm</strong><br>
+      Zaag de driehoek uit. Houd de lijnen aan de binnenkant (snij net buiten de lijn, schuur daarna op maat).
+    </div>
+
+    <div class="saw-step">
+      <span class="step-num">3</span>
+      <strong>Bevel de zijranden (links + rechts van driehoek)</strong><br>
+      Cirkelzaag / tafelzaag: zaagblad schuin op <strong id="sz-sb">33,83°</strong><br>
+      Beide aangrenzende vlakken krijgen dezelfde helling — samen sluiten ze naadloos.
+    </div>
+
+    <div class="saw-step">
+      <span class="step-num">4</span>
+      <strong>Bevel de onderrand</strong><br>
+      Zaagblad schuin op <strong id="sz-bb">38,16°</strong> — onderrand sluit dan vlak op de basis aan.
+    </div>
+
+    <div class="saw-step">
+      <span class="step-num">5</span>
+      <strong>Controleer vóór lijmen / verbinden</strong><br>
+      Leg twee vlakken droog tegen elkaar (zonder lijm). De voeg moet dicht zijn over de volledige lengte. Pas eventueel bij met een schaaf.
+    </div>
+
+    <div class="warn">
+      <strong class="highlight">Tip: zaagvolgorde</strong><br>
+      Zaag eerst de ruwe driehoek, dan pas de bevels. Zo houd je het werkstuk stabiel op de zaag en loop je niet het risico dat een smal geslepen stuk wegvliegt.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGINA: NESTING ═══════════════ -->
+<div id="page-nesting" class="page">
+  <div class="card">
+    <h2>Nestingplan — minimaal verlies</h2>
+    <p style="font-size:0.85rem; color:#aaa; margin-bottom:20px; line-height:1.6">
+      Door twee driehoeken gespiegeld naast elkaar te leggen, passen ze exact in één rechthoek.
+      Voor vier vlakken heb je dus <strong style="color:#f0c040">2 rechthoeken</strong> nodig.
+    </p>
+
+    <div class="results" style="margin-bottom:20px">
+      <div class="result-box">
+        <div class="label">Plaatbreedte (= basis)</div>
+        <div class="value" id="nest-b">62,83</div>
+        <div class="sub">cm</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Plaathoogte (hoogte driehoek)</div>
+        <div class="value" id="nest-h">50,86</div>
+        <div class="sub">cm</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Oppervlak 1 rechthoek</div>
+        <div class="value" id="nest-opp">3196</div>
+        <div class="sub">cm²</div>
+      </div>
+      <div class="result-box">
+        <div class="label">Materiaalbenutting</div>
+        <div class="value" style="color:#2ecc71">100%</div>
+        <div class="sub">nul verlies bij nesting</div>
+      </div>
+    </div>
+
+    <div class="preview">
+      <svg id="nest-svg" viewBox="0 0 340 220" width="340" height="220">
+        <!-- Rectangle 1 -->
+        <rect x="10" y="10" width="150" height="120" fill="none" stroke="#0f3460" stroke-width="1.5" rx="3"/>
+        <!-- Triangle A (upright) -->
+        <polygon id="nest-t1" points="10,130 160,130 85,10" fill="#1a4a6c" stroke="#f0c040" stroke-width="1.5"/>
+        <!-- Triangle B (inverted) -->
+        <polygon id="nest-t2" points="10,10 160,10 85,130" fill="#1a3a5c" stroke="#2ecc71" stroke-width="1.5"/>
+
+        <!-- Labels rect 1 -->
+        <text x="85" y="155" text-anchor="middle" class="dim-label" id="n-lbl-b">basis</text>
+        <text x="0" y="75" text-anchor="middle" class="dim-label" id="n-lbl-h" transform="rotate(-90,0,75)">hoogte</text>
+
+        <!-- Rectangle 2 -->
+        <rect x="175" y="10" width="150" height="120" fill="none" stroke="#0f3460" stroke-width="1.5" rx="3"/>
+        <polygon id="nest-t3" points="175,130 325,130 250,10" fill="#1a4a6c" stroke="#f0c040" stroke-width="1.5"/>
+        <polygon id="nest-t4" points="175,10 325,10 250,130" fill="#1a3a5c" stroke="#2ecc71" stroke-width="1.5"/>
+
+        <!-- Legend -->
+        <rect x="10" y="170" width="14" height="10" fill="#1a4a6c" stroke="#f0c040" stroke-width="1"/>
+        <text x="28" y="180" class="nesting-label">Driehoek 1 &amp; 3</text>
+        <rect x="140" y="170" width="14" height="10" fill="#1a3a5c" stroke="#2ecc71" stroke-width="1"/>
+        <text x="158" y="180" class="nesting-label">Driehoek 2 &amp; 4</text>
+
+        <text x="170" y="205" text-anchor="middle" class="nesting-label" id="n-plaat1">Plaat 1</text>
+        <text x="335" y="205" text-anchor="middle" class="nesting-label" id="n-plaat2">Plaat 2</text>
+      </svg>
+    </div>
+
+    <div class="warn" style="margin-top:0">
+      <strong class="highlight">Hoe zagen:</strong><br>
+      1. Teken diagonaal van hoek naar hoek → dit is de middenlijn.<br>
+      2. Zaag langs die lijn → twee perfecte driehoeken uit één rechthoek.<br>
+      3. Herhaal voor de tweede rechthoek.<br>
+      4. Resultaat: 4 identieke vlakken, nul restverlies.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGINA: TABEL ═══════════════ -->
+<div id="page-tabel" class="page">
+  <div class="card">
+    <h2>Snelle referentietabel</h2>
+    <table>
+      <thead>
+        <tr><th>Hoogte</th><th>Basis</th><th>Zijde (rib)</th><th>Hoogte vlak</th></tr>
+      </thead>
+      <tbody id="tabel-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const F_BASIS = 1.57075;
+  const F_ZIJDE = 1.4945;
+  const F_SH    = 1.27149; // schijnhoogte vlak = sqrt(F_ZIJDE² - (F_BASIS/2)²)
+
+  // Angles (fixed for this pyramid type)
+  const FACE_ANGLE     = Math.atan(1 / (F_BASIS / 2)) * 180 / Math.PI; // 51.84°
+  const BASE_BEVEL     = 90 - FACE_ANGLE;                               // 38.16°
+  // Dihedral along lateral edge
+  const half_b         = F_BASIS / 2;
+  const cos_di         = -(half_b * half_b) / (1 + half_b * half_b);
+  const DIHEDRAL       = Math.acos(cos_di) * 180 / Math.PI;             // 112.39°
+  const SIDE_BEVEL     = (180 - DIHEDRAL) / 2;                          // 33.83°
+  // Apex angle of triangle face
+  const APEX_ANGLE     = 2 * Math.atan((F_BASIS / 2) / F_SH) * 180 / Math.PI;
+  const BASE_TRI_ANGLE = (180 - APEX_ANGLE) / 2;
+
+  function fmt(n, dec=2) { return n.toFixed(dec).replace('.', ','); }
+  function fmtAngle(a)   { return fmt(a) + '°'; }
+
+  function updateAll(h) {
+    const b  = h * F_BASIS;
+    const z  = h * F_ZIJDE;
+    const sh = h * F_SH;
+
+    // Maten pagina
+    document.getElementById('res-hoogte').textContent = fmt(h);
+    document.getElementById('res-basis').textContent  = fmt(b);
+    document.getElementById('res-zijde').textContent  = fmt(z);
+    document.getElementById('res-sh').textContent     = fmt(sh);
+    document.getElementById('tri-basis').textContent  = fmt(b);
+    document.getElementById('tri-zijde').textContent  = fmt(z);
+    document.getElementById('tri-half').textContent   = fmt(b / 2);
+    document.getElementById('tri-sh').textContent     = fmt(sh);
+    document.getElementById('lbl-h').textContent      = fmt(h) + ' cm';
+    document.getElementById('lbl-b').textContent      = fmt(b) + ' cm';
+    document.getElementById('lbl-s').textContent      = fmt(z) + ' cm';
+
+    // Zaagplan pagina
+    document.getElementById('ang-face').textContent       = fmtAngle(FACE_ANGLE);
+    document.getElementById('ang-base-bevel').textContent = fmtAngle(BASE_BEVEL);
+    document.getElementById('ang-side-bevel').textContent = fmtAngle(SIDE_BEVEL);
+    document.getElementById('ang-apex').textContent       = fmtAngle(APEX_ANGLE);
+    document.getElementById('ang-base-tri').textContent   = fmtAngle(BASE_TRI_ANGLE);
+    document.getElementById('ang-dihedral').textContent   = fmtAngle(DIHEDRAL);
+    document.getElementById('sz-basis').textContent = fmt(b) + ' cm';
+    document.getElementById('sz-zijde').textContent = fmt(z) + ' cm';
+    document.getElementById('sz-sb').textContent    = fmtAngle(SIDE_BEVEL);
+    document.getElementById('sz-bb').textContent    = fmtAngle(BASE_BEVEL);
+
+    // Nesting pagina
+    document.getElementById('nest-b').textContent   = fmt(b);
+    document.getElementById('nest-h').textContent   = fmt(sh);
+    document.getElementById('nest-opp').textContent = fmt(b * sh, 0);
+    updateNestSVG(b, sh);
+  }
+
+  function updateNestSVG(b, sh) {
+    const svgW = 340, svgH = 220;
+    const margin = 10;
+    const gap = 15;
+    const boxW = (svgW - 2 * margin - gap) / 2;
+    const boxH = 120;
+    const scaleX = boxW / b;
+    const scaleY = boxH / sh;
+    const scale  = Math.min(scaleX, scaleY);
+    const pw = b * scale;
+    const ph = sh * scale;
+
+    // Left box
+    const lx = margin + (boxW - pw) / 2;
+    const ly = margin + (boxH - ph) / 2;
+    // Right box
+    const rx = margin + boxW + gap + (boxW - pw) / 2;
+    const ry = ly;
+
+    function pts(ox, oy, inv) {
+      const p1 = `${ox},${oy + ph}`;
+      const p2 = `${ox + pw},${oy + ph}`;
+      const p3 = `${ox + pw / 2},${oy}`;
+      const p4 = `${ox},${oy}`;
+      const p5 = `${ox + pw},${oy}`;
+      return inv
+        ? `${p4} ${p5} ${ox + pw / 2},${oy + ph}`
+        : `${p1} ${p2} ${p3}`;
+    }
+
+    document.getElementById('nest-t1').setAttribute('points', pts(lx, ly, false));
+    document.getElementById('nest-t2').setAttribute('points', pts(lx, ly, true));
+    document.getElementById('nest-t3').setAttribute('points', pts(rx, ry, false));
+    document.getElementById('nest-t4').setAttribute('points', pts(rx, ry, true));
+  }
+
+  function berekenVanHoogte(val) {
+    const h = parseFloat(val);
+    if (!h || h <= 0) return;
+    document.getElementById('slider').value = Math.min(h, 200);
+    updateAll(h);
+  }
+
+  function berekenVanBasis(val) {
+    const b = parseFloat(val);
+    if (!b || b <= 0) return;
+    updateAll(b / F_BASIS);
+  }
+
+  function syncSlider(val) {
+    document.getElementById('hoogte').value = val;
+    updateAll(parseFloat(val));
+  }
+
+  function setTab(tab) {
+    document.getElementById('tab-hoogte').style.display = tab === 'hoogte' ? '' : 'none';
+    document.getElementById('tab-basis').style.display  = tab === 'basis'  ? '' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'hoogte') || (i === 1 && tab === 'basis'));
+    });
+  }
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function buildTable() {
+    const hoogtes = [10, 15, 20, 25, 30, 35, 40, 50, 60, 75, 100, 120, 150];
+    const tbody = document.getElementById('tabel-body');
+    hoogtes.forEach(h => {
+      const b  = h * F_BASIS;
+      const z  = h * F_ZIJDE;
+      const sh = h * F_SH;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${h} cm</td><td>${fmt(b)} cm</td><td>${fmt(z)} cm</td><td>${fmt(sh)} cm</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  buildTable();
+  updateAll(40);
+</script>
+
+</body>
+</html>
